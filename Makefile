@@ -1,14 +1,17 @@
-MODULES += modules/kmod-basic
 MODULES += modules/kmod-clarg
 MODULES += modules/kmod-gpio_inpirq
 MODULES += modules/kmod-gpio_inpthrd
 MODULES += modules/kmod-gpio_outptask
 MODULES += modules/kmod-gpio_output
 MODULES += modules/kmod-gpio_outptimer
+MODULES += modules/kmod-gpio_outphrtimer
 # MODULES += modules/kmod-pdev
 MODULES += modules/kmod-tasklet
 
 all: pack
+
+info:
+	echo $(PATH)
 
 .PHONY: build
 build: build-kernel build-modules
@@ -29,11 +32,11 @@ proper: distclean
 install: build install-kernel install-modules
 
 clone-tools:
-	if ! [ -d ./tools ]; then git clone https://github.com/raspberrypi/tools; fi
+	if ! [ -d ./tools ]; then git clone --depth 1 https://github.com/raspberrypi/tools; fi
 
 clone-kernel:
-	if ! [ -d ./linux ]; then git clone https://github.com/raspberrypi/linux.git linux; fi
-	if ! [ -f ./linux/localversion ]; then echo "wendlers" > ./linux/localversion; fi
+	if ! [ -d ./linux ]; then git clone --depth 1 https://github.com/raspberrypi/linux.git linux; fi
+	if ! [ -f ./linux/localversion ]; then echo "-wendlers" > ./linux/localversion; fi
 
 build-kernel: clone-tools clone-kernel
 	if ! [ -f ./linux/.config ]; then (cd ./linux && make bcm2709_defconfig); fi

@@ -1,6 +1,6 @@
 ksrc   = "../../linux"
 sysr   = "$(PWD)/../../sysroot"
-mdir   = "modtest"
+mdir   = "wendlers"
 
 all:
 	make -C $(ksrc) M=$(PWD) modules

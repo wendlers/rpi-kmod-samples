@@ -5,6 +5,7 @@ MODULES += modules/kmod-gpio_outptask
 MODULES += modules/kmod-gpio_output
 MODULES += modules/kmod-gpio_outptimer
 MODULES += modules/kmod-gpio_outphrtimer
+MODULES += modules/kmod-moppy
 # MODULES += modules/kmod-pdev
 MODULES += modules/kmod-tasklet
 

@@ -1,5 +1,5 @@
 /*
- * Basic kernel module using a timer and GPIOs to flash a LED.
+ * Moppy as a kernel module :-)
  *
  * Author:
  * 	Stefan Wendler (devnull@kaltpost.de)
@@ -24,9 +24,9 @@
 
 static struct hrtimer hr_timer;
 
-#define PERIOD 				 40000
-#define FIRST_PIN				 2
-#define PIN_MAX					17
+#define PERIOD 				40000
+#define FIRST_PIN      2
+#define PIN_MAX				17
 #define LOW						 0
 #define HIGH					 1
 
@@ -62,22 +62,22 @@ static struct pinmap_t pinMap[] =
 {
 	{ -1, "PIN0"},
 	{ -1, "PIN1"},
-	{  2, "PIN2"},
+	{  2, "PIN2"},     // track 1
 	{  3, "PIN3"},
-	{  4, "PIN4"},
-	{ 17, "PIN5"},
-	{ 27, "PIN6"},
+	{ 17, "PIN4"},     // track 2
+	{ 18, "PIN5"},
+	{ 27, "PIN6"},     // track 3
 	{ 22, "PIN7"},
-	{ 10, "PIN8"},
-	{  9, "PIN9"},
-	{ 11, "PIN10"},
-	{  5, "PIN11"},
-	{  6, "PIN12"},
-	{ 13, "PIN13"},
-	{ 19, "PIN14"},
-	{ 26, "PIN15"},
-	{ 23, "PIN16"},
-	{ 24, "PIN17"},
+  { 23, "PIN8"},     // track 4
+	{ 24, "PIN9"},
+  { 25, "PIN10"},    // track 5
+	{  4, "PIN11"},
+	{ -1, "PIN12"},    // track 6
+	{ -1, "PIN13"},
+	{ -1, "PIN14"},    // track 7
+	{ -1, "PIN15"},
+	{ -1, "PIN16"},    // track 8
+	{ -1, "PIN17"},
 };
 
 
@@ -158,9 +158,9 @@ static ssize_t sysfs_command_store(struct kobject *kobj, struct kobj_attribute *
 	int pin = 0;
 	int value = 0;
 
-	if(sscanf(buf, "%d, %d", &pin, &value) == 0) {
+	if(sscanf(buf, "%d, %d", &pin, &value) == 2) {
 
-		printk("received: %d, %d\n", pin, value);
+		printk("moppy: received command %d, %d\n", pin, value);
 
 		if(pin >= FIRST_PIN && pin <= PIN_MAX) {
 			currentPeriod[pin] = value;
@@ -170,7 +170,7 @@ static ssize_t sysfs_command_store(struct kobject *kobj, struct kobj_attribute *
 		}
 	}
 	else {
-		printk(KERN_ERR "Invalid input\n");
+		printk(KERN_ERR "moppy: received invalid coammnd\n");
 	}
 
     return count;
@@ -257,18 +257,21 @@ static int __init moppy_init(void)
         return ret;
     }
 
-    printk(KERN_INFO "moppy: registered command interface under: /sys/kernel/moppy/command\n");
+    printk(KERN_INFO "moppy: registered command interface: /sys/kernel/moppy/command\n");
 
 	for(p = FIRST_PIN; p <= PIN_MAX; p++) {
 		if(pinMap[p].pin != -1) {
 			ret = gpio_request_one(pinMap[p].pin, GPIOF_OUT_INIT_LOW, pinMap[p].label);
 
 			if (ret) {
-				printk(KERN_ERR "Unable to request GPIO #%d (%s) -> pin DISABLED\n", pinMap[p].pin, pinMap[p].label);
+				printk(KERN_ERR "moppy: unable to rgister GPIO #%d (%s) -> DISABLED\n", pinMap[p].pin, pinMap[p].label);
 				pinMap[p].pin = -1;
 			}
+      else {
+        printk(KERN_INFO "moppy: registered GPIO #%d (%s)\n", pinMap[p].pin, pinMap[p].label);
+      }
 		}
-    }
+  }
 
 	reset();
 
@@ -292,19 +295,15 @@ static void __exit moppy_exit(void)
 	printk(KERN_INFO "%s\n", __func__);
 
 	/* remove kobj */
-    kobject_put(moppy_kobj);
-
-	ret = hrtimer_cancel(&hr_timer);
-	if(ret) {
-		printk("Failed to cancel tiemr.\n");
-	}
+  kobject_put(moppy_kobj);
+	hrtimer_cancel(&hr_timer);
 
 	for(p = FIRST_PIN; p <= PIN_MAX; p++) {
 		if(pinMap[p].pin != -1) {
 			gpio_set_value(pinMap[p].pin, LOW);
 			gpio_free(pinMap[p].pin);
 		}
-    }
+  }
 }
 
 MODULE_LICENSE("GPL");
